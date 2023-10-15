@@ -1,29 +1,27 @@
----
-title: "5261 Hw4"
-output:
-  pdf_document: default
-  html_document: default
-date: "2023-10-12"
----
+5261 Hw4
+================
+2023-10-12
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-
-```{r cars}
+``` r
 dat = read.csv("/Users/kensong/Desktop/找找资料/Stock_Bond.csv", header = T)
    prices = cbind(dat$GM_AC, dat$F_AC, dat$CAT_AC, dat$UTX_AC,
       dat$MRK_AC, dat$IBM_AC)
    n = dim(prices)[1]
    returns =  100 * (prices[2:n, ] / prices[1:(n-1), ] - 1)
    pairs(returns)
+```
+
+![](Portfolio_files/figure-gfm/cars-1.png)<!-- -->
+
+``` r
    mean_vect = colMeans(returns)
    cov_mat = cov(returns)
    sd_vect = sqrt(diag(cov_mat))
 ```
+
 # Question 1
-```{r}
+
+``` r
 library(quadprog)
 
 
@@ -142,31 +140,54 @@ plot_efficient_frontier = function(result, title=''){
 plot_efficient_frontier(result, 'Problem 1')
 
 print(round(weights[ind_ms,], 4)) # print the weights of the tangency portfolio
+```
 
+    ## [1] -0.0917 -0.0031  0.3359  0.3841  0.3195  0.0552
+
+``` r
 text(sd_vect[1], mean_vect[1], 'GM', cex=1.5)
 text(sd_vect[2], mean_vect[2], 'F', cex=1.5)
 text(sd_vect[3], mean_vect[3], 'CAT', cex=1.5)
 text(sd_vect[4], mean_vect[4], 'UTX', cex=1.5)
 text(sd_vect[5], mean_vect[5], 'MRK', cex=1.5)
 text(sd_vect[6], mean_vect[6], 'TBM', cex=1.5)
-
 ```
 
+![](Portfolio_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+
 # Question 2
-```{r}
+
+``` r
 ind = result$max_sharpe_ind
 
 E_R_P = 0.0007 * 100 # the desired return (as a percent)
 E_R_T = result$muP[ind] # the return of the tangency portfolio
 c( E_R_P, E_R_T, mufree )
+```
 
+    ## [1] 0.070000000 0.073411544 0.008219178
+
+``` r
 omega = ( E_R_P - mufree ) / ( E_R_T - mufree )
 print(sprintf("omega= %10.6f", omega) )
+```
 
+    ## [1] "omega=   0.947670"
+
+``` r
 print("Tangency porfolio weights:")
+```
+
+    ## [1] "Tangency porfolio weights:"
+
+``` r
 weights_stock = omega*result$weights[ind,]
 print(weights_stock)
+```
 
+    ## [1] -0.086866909 -0.002917908  0.318313977  0.364024462  0.302827793  0.052288168
+
+``` r
 S = 100000
 investments_stock = S * weights_stock
 
@@ -186,12 +207,19 @@ for (i in 1:length(stocks)) {
   operation <- ifelse(investments[i] < 0, "Short", "Go long")
   print(sprintf("%s %0.9f(%d) = %0.4f dollars worth of %s", operation, weights[i], S, investments[i], stocks[i]))
 }
-
-
 ```
 
+    ## [1] "Short -0.086866909(100000) = -8686.6909 dollars worth of GM"
+    ## [1] "Short -0.002917908(100000) = -291.7908 dollars worth of F"
+    ## [1] "Go long 0.318313977(100000) = 31831.3977 dollars worth of CAT"
+    ## [1] "Go long 0.364024462(100000) = 36402.4462 dollars worth of UTX"
+    ## [1] "Go long 0.302827793(100000) = 30282.7793 dollars worth of MRK"
+    ## [1] "Go long 0.052288168(100000) = 5228.8168 dollars worth of IBM"
+    ## [1] "Go long 0.052330417(100000) = 5233.0417 dollars worth of risk-free asset"
+
 # Question 3
-```{r}
+
+``` r
 # Convert string to Date object
 black_monday <- as.Date("19-Oct-87", format="%d-%b-%y")
 
@@ -207,7 +235,6 @@ if (is_black_monday_included) {
 } else {
   print("No, the dataset does not include Black Monday.")
 }
-
-
 ```
 
+    ## [1] "Yes, the dataset includes Black Monday."
