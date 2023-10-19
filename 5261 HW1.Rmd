@@ -1,0 +1,105 @@
+---
+title: '5261 HW1 R code Bangzhuo Song'
+output: pdf_document
+date: "2023-09-15"
+---
+#Question 4
+```{r Question 4}
+niter = 1e5 # number of iterations
+below = rep(0, niter) # set up storage
+set.seed(2009)
+for (i in 1:niter)
+{
+    r = rnorm(45, mean = 0.05/253,
+              sd = 0.23/sqrt(253)) # generate random numbers
+    logPrice = log(1e6) + cumsum(r)
+    minlogP = min(logPrice) # minimum price over next 45 days
+    below[i] = as.numeric(minlogP < log(950000))
+}
+mean_below<-mean(below)
+# Print the mean below
+cat("Mean below:", mean_below)
+```
+
+
+
+#Question 5
+```{r Question 5}
+# Set the parameters
+n_simulations <- 1e5  # Number of simulations
+n_days <- 100           # Number of trading days per simulation
+
+# Initialize variables to keep track of profits
+profits <- numeric(n_simulations)
+
+# Run the simulations
+for (i in 1:n_simulations) {
+  # Simulate stock price movements for n_days
+  stock_prices <- numeric(n_days)
+  stock_prices[1] <- 1000000  # Initial stock price
+  
+  for (day in 2:n_days) {
+    # Simulate daily price change (you can use a random distribution)
+    daily_change <- rnorm(1, mean =  0.05/253, sd = 0.23/sqrt(253))  
+    stock_prices[day] <- stock_prices[day - 1] * exp(daily_change)
+    #check conditions
+    if(stock_prices[day] >= 1100000) {
+      profits[i] = 1
+      break
+    } else if (stock_prices[day] < 950000) {
+      profits[i] = 0
+      break
+    }
+  }
+}
+
+# Calculate the mean of the profits vector
+mean_profit <- mean(profits)
+
+# Print the mean profit
+cat("The probability that the hedge fund will make a profit of at least $100,000 is:", mean_profit)
+
+
+```
+
+
+#Question 6
+```{r Question 6}
+# Set the parameters
+n_simulations <- 1e5  # Number of simulations
+n_days <- 100           # Number of trading days per simulation
+
+# Initialize variables to keep track of losses
+losses <- numeric(n_simulations)
+
+# Run the simulations
+for (i in 1:n_simulations) {
+  # Simulate stock price movements for n_days
+  stock_prices <- numeric(n_days)
+  stock_prices[1] <- 1000000  # Initial stock price
+  
+  for (day in 2:n_days) {
+    # Simulate daily price change (you can use a random distribution)
+    daily_change <- rnorm(1, mean =  0.05/253, sd = 0.23/sqrt(253)) 
+    stock_prices[day] <- stock_prices[day - 1] * exp(daily_change)
+    
+    if (stock_prices[day] < 950000) {
+      losses[i] = 1  # Mark this simulation as a loss
+      break
+    } else if (stock_prices[day] >= 1100000) {
+      break  # No loss, and we exit the loop early
+    }
+  }
+  if (stock_prices[n_days] >= 950000 && stock_prices[n_days] < 1100000) {
+    losses[i] = 0  # If the closing price is within the range, it's not a loss
+  }
+}
+
+# Calculate the probability of a loss
+probability_of_loss <- mean(losses)
+
+# Print the probability
+cat("The probability rhat the hedge fund will suffer a loss is:", probability_of_loss)
+
+```
+
