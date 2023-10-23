@@ -1,0 +1,83 @@
+---
+title: "5241 hw4 question 3"
+output:
+  pdf_document: default
+  html_document: default
+date: "2023-10-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Question a
+```{r}
+library(quadprog)
+
+# Define the returns vector
+mu <- c(Microsoft = 0.0427, Nordstrom = 0.0015, Starbucks = 0.0285)
+
+# Define the covariance matrix
+cov_matrix <- matrix(0, 3, 3)
+diag(cov_matrix) <- c(0.0100, 0.0109, 0.0199) 
+cov_matrix[1,2] <- cov_matrix[2,1] <- 0.0018
+cov_matrix[1,3] <- cov_matrix[3,1] <- 0.0011
+cov_matrix[2,3] <- cov_matrix[3,2] <- 0.0026 
+
+# Quadratic programming to find global minimum variance portfolio
+Dmat <- cov_matrix
+dvec <- rep(0, 3)
+Amat <- matrix(1, ncol=3)
+bvec <- 1
+meq <- 1
+
+solution <- solve.QP(Dmat, dvec, t(Amat), bvec, meq)
+
+# Extracting the portfolio weights, mean and variance
+weights <- solution$solution
+mean_portfolio <- sum(mu * weights)
+var_portfolio <- t(weights) %*% cov_matrix %*% weights
+
+list(weights = weights, mean_portfolio = mean_portfolio, variance_portfolio = as.numeric(var_portfolio))
+
+
+```
+
+#Question b
+```{r message=FALSE, warning=FALSE}
+library(IntroCompFinR)
+target.return = mu[1]
+e.port = efficient.portfolio(mu,cov_matrix,target.return)
+e.port
+weights = e.port$weights
+risk = e.port$sd
+
+cat("Microsoft weight:", weights[1], "\n")
+cat("Nordstrom weight:", weights[2], "\n")
+cat("Starbucks weight:", weights[3], "\n\n")
+cat("Risk of the efficient portfolio:", risk, "\n")
+```
+
+#Question c
+```{r}
+r.f = 0.0001
+tangent.port = tangency.portfolio(mu,cov_matrix,r.f)
+tangent.port
+```
+
+#Question d
+```{r}
+tareget_return = mu[1]
+tan_risk = tangent.port$er
+risk_free = 0.0001
+
+root <- uniroot(function(wr) tan_risk * wr + (1-wr)*risk_free - tareget_return, interval = c(0,1))
+solution <- root$root
+tan_port_weights = tangent.port$weights
+portfolio_d = c(solution*tan_port_weights,1-solution)
+expected_risk = solution*tangent.port$sd
+cat("Portfolio with of risky assets and the risk free asset
+with the same expected return as Microsoft:", portfolio_d, "\n")
+cat("Expected risk of the portfolio :", expected_risk, "\n")
+```
+
