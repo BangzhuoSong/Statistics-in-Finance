@@ -1,0 +1,176 @@
+---
+title: "5261_HW5_R"
+output:
+  pdf_document: default
+  html_document: default
+date: "2023-10-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Question 3.a
+```{r}
+
+library(readxl)
+
+# Read data from Excel file
+data <- read_excel("/Users/kensong/Desktop/CAPM-DATA.xlsx") 
+
+# Compute excess returns for each firm and the market
+data$MSOFT_excess <- data$MSOFT - data$RFREE
+data$GE_excess <- data$GE - data$RFREE
+data$GM_excess <- data$GM - data$RFREE
+data$IBM_excess <- data$IBM - data$RFREE
+data$MPORT_excess <- data$MPORT - data$RFREE
+
+# Define a function to perform CAPM regression and retrieve both intercept and beta
+get_params <- function(firm_excess_col) {
+  model <- lm(firm_excess_col ~ data$MPORT_excess, data = data)
+  return(coef(model)) # Return both intercept and beta
+}
+
+# Get intercept and beta values for each firm
+MSOFT_params <- get_params(data$MSOFT_excess)
+GE_params <- get_params(data$GE_excess)
+GM_params <- get_params(data$GM_excess)
+IBM_params <- get_params(data$IBM_excess)
+
+# Print the intercept and beta values
+cat("For Microsoft:\nAlpha (Intercept):", MSOFT_params[1], "\nBeta:", MSOFT_params[2], "\n\n")
+cat("For GE:\nAlpha (Intercept):", GE_params[1], "\nBeta:", GE_params[2], "\n\n")
+cat("For GM:\nAlpha (Intercept):", GM_params[1], "\nBeta:", GM_params[2], "\n\n")
+cat("For IBM:\nAlpha (Intercept):", IBM_params[1], "\nBeta:", IBM_params[2], "\n")
+cat("Beta of GE is smaller than 1, meaning it is less volatile than the market.\nBeta of Microsoft, GE and IBM is larger than 1, meaning it is more volatile than the market.")
+```
+
+# Question 3.b
+```{r}
+# Define a function to test if intercept is different from zero
+test_alpha <- function(firm_excess_col) {
+  model <- lm(firm_excess_col ~ data$MPORT_excess, data = data)
+  model_summary <- summary(model)
+  
+  # Extract t-value and p-value for intercept
+  t_value <- model_summary$coefficients[1, "t value"]
+  p_value <- model_summary$coefficients[1, "Pr(>|t|)"]
+  
+  return(list(t_value = t_value, p_value = p_value))
+}
+
+# Test intercept for each firm
+MSOFT_test <- test_alpha(data$MSOFT_excess)
+GE_test <- test_alpha(data$GE_excess)
+GM_test <- test_alpha(data$GM_excess)
+IBM_test <- test_alpha(data$IBM_excess)
+
+# Print results
+cat("For Microsoft:\nT-value for Alpha:", MSOFT_test$t_value, "\nP-value for Alpha:", MSOFT_test$p_value, "\n\n")
+cat("For GE:\nT-value for Alpha:", GE_test$t_value, "\nP-value for Alpha:", GE_test$p_value, "\n\n")
+cat("For GM:\nT-value for Alpha:", GM_test$t_value, "\nP-value for Alpha:", GM_test$p_value, "\n\n")
+cat("For IBM:\nT-value for Alpha:", IBM_test$t_value, "\nP-value for Alpha:", IBM_test$p_value, "\n")
+cat("For all firms (Microsoft, GE, GM, IBM), the p-values are greater than the 0.05 significance level\n,so we fail to reject the null hypothesis for each firm.")
+```
+
+# Question3.c
+```{r}
+# Define a function to compute 95% CI for beta
+get_beta_CI <- function(firm_excess_col) {
+  model <- lm(firm_excess_col ~ data$MPORT_excess, data = data)
+  model_summary <- summary(model)
+  
+  # Extract beta and its standard error
+  beta <- model_summary$coefficients[2, "Estimate"]
+  SE_beta <- model_summary$coefficients[2, "Std. Error"]
+  
+  # Degrees of freedom
+  df <- length(firm_excess_col) - 2
+  
+  # Critical t-value
+  t_crit <- qt(0.975, df) # 0.975 for a two-sided test with alpha = 0.05
+  
+  # Compute the confidence interval
+  lower_bound <- beta - t_crit * SE_beta
+  upper_bound <- beta + t_crit * SE_beta
+  
+  return(list(lower = lower_bound, upper = upper_bound))
+}
+
+# Compute 95% CI for beta for each firm
+MSOFT_CI <- get_beta_CI(data$MSOFT_excess)
+GE_CI <- get_beta_CI(data$GE_excess)
+GM_CI <- get_beta_CI(data$GM_excess)
+IBM_CI <- get_beta_CI(data$IBM_excess)
+
+# Print results
+cat("For Microsoft:\n95% CI for Beta:", MSOFT_CI$lower, "to", MSOFT_CI$upper, "\n\n")
+cat("For GE:\n95% CI for Beta:", GE_CI$lower, "to", GE_CI$upper, "\n\n")
+cat("For GM:\n95% CI for Beta:", GM_CI$lower, "to", GM_CI$upper, "\n\n")
+cat("For IBM:\n95% CI for Beta:", IBM_CI$lower, "to", IBM_CI$upper, "\n")
+
+```
+
+# Question 3.d
+```{r}
+# Define a function to test if beta is different from 1
+test_beta_one <- function(firm_excess_col) {
+  model <- lm(firm_excess_col ~ data$MPORT_excess, data = data)
+  model_summary <- summary(model)
+  
+  # Extract beta and its standard error
+  beta <- model_summary$coefficients[2, "Estimate"]
+  SE_beta <- model_summary$coefficients[2, "Std. Error"]
+  
+  # Compute the t-test statistic
+  t_statistic <- (beta - 1) / SE_beta
+  df <- length(firm_excess_col) - 2
+  p_value <- 2 * (1 - pt(abs(t_statistic), df))
+  
+  return(list(t_statistic = t_statistic, p_value = p_value))
+}
+
+# Test beta for each firm
+MSOFT_test <- test_beta_one(data$MSOFT_excess)
+GE_test <- test_beta_one(data$GE_excess)
+GM_test <- test_beta_one(data$GM_excess)
+IBM_test <- test_beta_one(data$IBM_excess)
+
+# Print results
+cat("For Microsoft:\nT-statistic for Beta:", MSOFT_test$t_statistic, "\nP-value for Beta:", MSOFT_test$p_value, "\n\n")
+cat("For GE:\nT-statistic for Beta:", GE_test$t_statistic, "\nP-value for Beta:", GE_test$p_value, "\n\n")
+cat("For GM:\nT-statistic for Beta:", GM_test$t_statistic, "\nP-value for Beta:", GM_test$p_value, "\n\n")
+cat("For IBM:\nT-statistic for Beta:", IBM_test$t_statistic, "\nP-value for Beta:", IBM_test$p_value, "\n")
+cat("For Microsoft,the p-values are smaller than the 0.05 significance level,\nso we reject the null hypothesis.\n")
+cat("For GE, GM, IBM, the p-values are smaller than the 0.05 significance level,\nso we reject the null hypothesis for each firm.")
+```
+
+# Question 3.e
+```{r}
+test_beta_msoft_greater_than_one <- function() {
+  model <- lm(data$MSOFT_excess ~ data$MPORT_excess, data = data)
+  model_summary <- summary(model)
+  
+  # Extract beta estimate and its standard error
+  beta_hat <- model_summary$coefficients[2, "Estimate"]
+  SE_beta <- model_summary$coefficients[2, "Std. Error"]
+  
+  # Compute t-statistic for hypothesis test
+  t_value <- (beta_hat - 1) / SE_beta
+  
+  # Compute one-tailed p-value
+  p_value <- 1 - pt(t_value, model_summary$df[2])
+  
+  return(list(t_value = t_value, p_value = p_value))
+}
+
+# Test beta for Microsoft
+MSOFT_test <- test_beta_msoft_greater_than_one()
+
+# Print results
+cat("For Microsoft:\nT-value for Beta:", MSOFT_test$t_value, "\nP-value for Beta:", MSOFT_test$p_value, "\n")
+cat("For Microsoft,the p-values are smaller than the 0.05 significance level,\nso we reject the null hypothesis and beta is bigger than 1.\n")
+```
+
+
+
